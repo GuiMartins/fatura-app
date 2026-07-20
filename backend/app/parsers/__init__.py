@@ -1,4 +1,7 @@
+import io
+
 import pdfplumber
+from pdfminer.pdfdocument import PDFEncryptionError, PDFPasswordIncorrect
 
 from .base import ParsedFatura
 from .bradesco import BradescoParser
@@ -13,15 +16,22 @@ class BancoNaoIdentificadoError(Exception):
     pass
 
 
-def extrair_texto_pdf(pdf_bytes: bytes) -> str:
-    import io
-
-    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
-        return "\n".join(page.extract_text() or "" for page in pdf.pages)
+class SenhaIncorretaError(Exception):
+    pass
 
 
-def processar_fatura(pdf_bytes: bytes) -> ParsedFatura:
-    texto = extrair_texto_pdf(pdf_bytes)
+def extrair_texto_pdf(pdf_bytes: bytes, senha: str | None = None) -> str:
+    try:
+        with pdfplumber.open(io.BytesIO(pdf_bytes), password=senha or "") as pdf:
+            return "\n".join(page.extract_text() or "" for page in pdf.pages)
+    except (PDFPasswordIncorrect, PDFEncryptionError) as exc:
+        raise SenhaIncorretaError(
+            "Esta fatura esta protegida por senha. Informe a senha correta."
+        ) from exc
+
+
+def processar_fatura(pdf_bytes: bytes, senha: str | None = None) -> ParsedFatura:
+    texto = extrair_texto_pdf(pdf_bytes, senha)
 
     for parser in PARSERS:
         if parser.matches(texto):
