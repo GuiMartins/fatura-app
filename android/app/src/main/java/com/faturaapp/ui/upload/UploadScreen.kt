@@ -32,6 +32,7 @@ fun UploadScreen(
 ) {
     val arquivoSelecionado by viewModel.arquivoSelecionado.collectAsState()
     val senha by viewModel.senha.collectAsState()
+    val temSenhasCadastradas by viewModel.temSenhasCadastradas.collectAsState()
     val uploadState by viewModel.uploadState.collectAsState()
 
     val seletorArquivo = rememberLauncherForActivityResult(
@@ -76,17 +77,25 @@ fun UploadScreen(
             Text("Escolher arquivo")
         }
 
-        OutlinedTextField(
-            value = senha,
-            onValueChange = viewModel::onSenhaChange,
-            label = { Text("Senha do PDF (opcional)") },
-            singleLine = true,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp),
-        )
+        if (!temSenhasCadastradas) {
+            OutlinedTextField(
+                value = senha,
+                onValueChange = viewModel::onSenhaChange,
+                label = { Text("Senha do PDF (opcional)") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+            )
+            Text(
+                text = "Dica: você pode pré-cadastrar senhas na tela \"Senhas\" do Dashboard " +
+                    "para o app abrir PDFs protegidos automaticamente, sem digitar toda vez.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
 
         when (val estado = uploadState) {
             is UploadState.Erro -> Text(

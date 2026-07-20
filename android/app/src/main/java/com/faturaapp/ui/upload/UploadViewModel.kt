@@ -39,8 +39,25 @@ class UploadViewModel(application: Application) : AndroidViewModel(application) 
     private val _senha = MutableStateFlow("")
     val senha: StateFlow<String> = _senha.asStateFlow()
 
+    private val _temSenhasCadastradas = MutableStateFlow(false)
+    val temSenhasCadastradas: StateFlow<Boolean> = _temSenhasCadastradas.asStateFlow()
+
     private val _uploadState = MutableStateFlow<UploadState>(UploadState.Idle)
     val uploadState: StateFlow<UploadState> = _uploadState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            try {
+                val backendUrl = preferencesRepository.backendUrl.first()
+                if (!backendUrl.isNullOrBlank()) {
+                    val senhas = ApiClientProvider.getApi(backendUrl).listarSenhasPadrao()
+                    _temSenhasCadastradas.value = senhas.isNotEmpty()
+                }
+            } catch (e: Exception) {
+                // Mantem o campo de senha visivel se nao conseguir checar as cadastradas
+            }
+        }
+    }
 
     fun onSenhaChange(novaSenha: String) {
         _senha.value = novaSenha
