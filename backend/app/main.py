@@ -29,8 +29,11 @@ async def upload_fatura(
     if existente:
         raise HTTPException(409, "Esta fatura ja foi processada anteriormente")
 
+    senhas_padrao = [s.valor for s in db.query(models.SenhaPadrao).all()]
+    senhas_candidatas = ([senha] if senha else []) + senhas_padrao
+
     try:
-        fatura_parseada = processar_fatura(pdf_bytes, senha)
+        fatura_parseada = processar_fatura(pdf_bytes, senhas_candidatas)
     except BancoNaoIdentificadoError as exc:
         raise HTTPException(422, str(exc))
     except SenhaIncorretaError as exc:
@@ -130,6 +133,33 @@ def resumo_mensal(ano: int, mes: int, db: Session = Depends(get_db)):
     if resumo is None:
         raise HTTPException(404, "Nenhuma fatura encontrada para este periodo")
     return resumo
+
+
+@app.get("/senhas-padrao", response_model=list[schemas.SenhaPadraoOut])
+def listar_senhas_padrao(db: Session = Depends(get_db)):
+    return db.query(models.SenhaPadrao).all()
+
+
+@app.post("/senhas-padrao", response_model=schemas.SenhaPadraoOut)
+def criar_senha_padrao(payload: schemas.SenhaPadraoCreate, db: Session = Depends(get_db)):
+    existente = db.query(models.SenhaPadrao).filter_by(valor=payload.valor).first()
+    if existente:
+        raise HTTPException(409, "Esta senha ja esta cadastrada")
+
+    senha_padrao = models.SenhaPadrao(valor=payload.valor, descricao=payload.descricao)
+    db.add(senha_padrao)
+    db.commit()
+    db.refresh(senha_padrao)
+    return senha_padrao
+
+
+@app.delete("/senhas-padrao/{senha_id}", status_code=204)
+def remover_senha_padrao(senha_id: int, db: Session = Depends(get_db)):
+    senha_padrao = db.query(models.SenhaPadrao).get(senha_id)
+    if not senha_padrao:
+        raise HTTPException(404, "Senha nao encontrada")
+    db.delete(senha_padrao)
+    db.commit()
 
 
 @app.get("/comparacao", response_model=schemas.ComparacaoMensal)
