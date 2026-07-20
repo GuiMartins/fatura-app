@@ -37,6 +37,7 @@ import com.faturaapp.data.model.Fatura
 fun DashboardScreen(
     onEnviarFatura: () -> Unit,
     onComparar: () -> Unit,
+    onSenhas: () -> Unit,
     viewModel: DashboardViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -56,6 +57,9 @@ fun DashboardScreen(
             TopAppBar(
                 title = { Text("Fatura App") },
                 actions = {
+                    TextButton(onClick = onSenhas) {
+                        Text("Senhas")
+                    }
                     TextButton(onClick = onComparar) {
                         Text("Comparar")
                     }
