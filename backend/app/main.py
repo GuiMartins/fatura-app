@@ -1,12 +1,12 @@
 import hashlib
 
-from fastapi import Depends, FastAPI, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from . import models, schemas
 from .categorizer import categorizar
 from .database import Base, engine, get_db
-from .parsers import BancoNaoIdentificadoError, processar_fatura
+from .parsers import BancoNaoIdentificadoError, SenhaIncorretaError, processar_fatura
 
 Base.metadata.create_all(bind=engine)
 
@@ -14,7 +14,11 @@ app = FastAPI(title="Fatura App API")
 
 
 @app.post("/faturas/upload", response_model=schemas.FaturaOut)
-async def upload_fatura(arquivo: UploadFile, db: Session = Depends(get_db)):
+async def upload_fatura(
+    arquivo: UploadFile,
+    senha: str | None = Form(None),
+    db: Session = Depends(get_db),
+):
     if arquivo.content_type != "application/pdf":
         raise HTTPException(400, "Envie um arquivo PDF")
 
@@ -26,9 +30,11 @@ async def upload_fatura(arquivo: UploadFile, db: Session = Depends(get_db)):
         raise HTTPException(409, "Esta fatura ja foi processada anteriormente")
 
     try:
-        fatura_parseada = processar_fatura(pdf_bytes)
+        fatura_parseada = processar_fatura(pdf_bytes, senha)
     except BancoNaoIdentificadoError as exc:
         raise HTTPException(422, str(exc))
+    except SenhaIncorretaError as exc:
+        raise HTTPException(401, str(exc))
 
     fatura = models.Fatura(
         banco=fatura_parseada.banco,
