@@ -20,6 +20,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -117,6 +118,7 @@ private fun ConteudoFaturaDetalhe(
     val totalGasto = fatura.transacoes.sumOf { it.valor }
     val sufixoCartao = if (fatura.cartao.isNotBlank()) " (••••${fatura.cartao})" else ""
     val titulares = fatura.transacoes.map { it.titular }.filter { it.isNotBlank() }.distinct()
+    val expandido = remember { mutableStateMapOf<String, Boolean>() }
 
     LazyColumn(
         modifier = Modifier
@@ -157,15 +159,22 @@ private fun ConteudoFaturaDetalhe(
 
         if (titulares.size > 1) {
             titulares.forEach { titular ->
+                val transacoesDoTitular = fatura.transacoes.filter { it.titular == titular }
+                val estaExpandido = expandido[titular] ?: false
+
                 item {
-                    Text(
-                        text = titular,
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                    TitularHeader(
+                        titular = titular,
+                        quantidade = transacoesDoTitular.size,
+                        total = transacoesDoTitular.sumOf { it.valor },
+                        expandido = estaExpandido,
+                        onClick = { expandido[titular] = !estaExpandido },
                     )
                 }
-                items(fatura.transacoes.filter { it.titular == titular }) { transacao ->
-                    TransacaoRow(transacao, onClick = { onTransacaoClick(transacao) })
+                if (estaExpandido) {
+                    items(transacoesDoTitular) { transacao ->
+                        TransacaoRow(transacao, onClick = { onTransacaoClick(transacao) })
+                    }
                 }
             }
         } else {
@@ -173,6 +182,41 @@ private fun ConteudoFaturaDetalhe(
                 TransacaoRow(transacao, onClick = { onTransacaoClick(transacao) })
             }
         }
+    }
+}
+
+@Composable
+private fun TitularHeader(
+    titular: String,
+    quantidade: Int,
+    total: Double,
+    expandido: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = if (expandido) "▾" else "▸",
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(end = 8.dp),
+            )
+            Text(
+                text = "$titular ($quantidade)",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+        Text(
+            text = "R$ %.2f".format(total),
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }
 
