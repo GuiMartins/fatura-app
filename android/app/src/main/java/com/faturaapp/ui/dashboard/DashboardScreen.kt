@@ -24,11 +24,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.BrightnessAuto
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -42,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.faturaapp.data.PreferencesRepository
 import com.faturaapp.data.model.Fatura
 import androidx.compose.material3.HorizontalDivider
 import com.faturaapp.ui.theme.BancoBadge
@@ -53,12 +48,11 @@ import com.faturaapp.ui.theme.CategoriaIcone
 fun DashboardScreen(
     onEnviarFatura: () -> Unit,
     onComparar: () -> Unit,
-    onSenhas: () -> Unit,
+    onConfiguracoes: () -> Unit,
     onAbrirFatura: (Int) -> Unit,
     viewModel: DashboardViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsState()
-    val temaPreferido by viewModel.temaPreferido.collectAsState()
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val onResumeAction by rememberUpdatedState(viewModel::carregarFaturas)
@@ -80,19 +74,11 @@ fun DashboardScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = viewModel::alternarTema) {
-                        val (icone, descricao) = when (temaPreferido) {
-                            PreferencesRepository.TEMA_CLARO -> Icons.Filled.LightMode to "Tema: claro"
-                            PreferencesRepository.TEMA_ESCURO -> Icons.Filled.DarkMode to "Tema: escuro"
-                            else -> Icons.Filled.BrightnessAuto to "Tema: sistema"
-                        }
-                        Icon(imageVector = icone, contentDescription = descricao)
-                    }
-                    IconButton(onClick = onSenhas) {
-                        Icon(imageVector = Icons.Filled.Lock, contentDescription = "Senhas")
-                    }
                     IconButton(onClick = onComparar) {
                         Icon(imageVector = Icons.Filled.BarChart, contentDescription = "Comparar")
+                    }
+                    IconButton(onClick = onConfiguracoes) {
+                        Icon(imageVector = Icons.Filled.Settings, contentDescription = "Configurações")
                     }
                 },
             )
