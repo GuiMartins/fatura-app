@@ -7,9 +7,11 @@ import com.faturaapp.data.PreferencesRepository
 import com.faturaapp.data.model.Fatura
 import com.faturaapp.data.network.ApiClientProvider
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 sealed class DashboardState {
@@ -25,8 +27,23 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val _state = MutableStateFlow<DashboardState>(DashboardState.Loading)
     val state: StateFlow<DashboardState> = _state.asStateFlow()
 
+    val temaPreferido: StateFlow<String> = preferencesRepository.temaPreferido.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = PreferencesRepository.TEMA_SISTEMA,
+    )
+
     init {
         carregarFaturas()
+    }
+
+    fun alternarTema() {
+        val proximo = when (temaPreferido.value) {
+            PreferencesRepository.TEMA_SISTEMA -> PreferencesRepository.TEMA_CLARO
+            PreferencesRepository.TEMA_CLARO -> PreferencesRepository.TEMA_ESCURO
+            else -> PreferencesRepository.TEMA_SISTEMA
+        }
+        viewModelScope.launch { preferencesRepository.setTemaPreferido(proximo) }
     }
 
     fun carregarFaturas() {
