@@ -190,9 +190,13 @@ independentes, ambos em `ubuntu-latest`:
 - **`unit-tests`**: `./gradlew testDebugUnitTest` (Categorizer,
   SummaryAggregator) — sempre roda, sem dependência externa.
 - **`instrumented-tests`**: emulador Android via
-  `reactivecircus/android-emulator-runner` (API 30, com cache de
-  snapshot do AVD) rodando `./gradlew connectedDebugAndroidTest`,
-  **excluindo `InvoiceDispatcherTest`** via
+  `reactivecircus/android-emulator-runner` (API 30, AVD sempre criado do
+  zero — **sem** cache de snapshot, ver nota no próprio `ci.yml`: a
+  combinação de snapshot salvo + recarregado bateu num bug real de
+  compatibilidade com a versão atual do emulator, `adb` nunca saía de
+  "device offline" e o job estourava os 10min de timeout; um boot único
+  por execução é ~1min mais lento mas confiável) rodando `./gradlew
+  connectedDebugAndroidTest`, **excluindo `InvoiceDispatcherTest`** via
   `-Pandroid.testInstrumentationRunnerArguments.notClass=...` — esse
   teste precisa dos PDFs reais de `src/androidTest/assets/`, que são
   gitignored de propósito (dado pessoal, nunca commitados) e por isso
