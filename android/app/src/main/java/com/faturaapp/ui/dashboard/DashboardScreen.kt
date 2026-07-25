@@ -42,12 +42,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.faturaapp.R
 import com.faturaapp.categorizer.AVAILABLE_CATEGORIES
 import com.faturaapp.data.PreferencesRepository
 import com.faturaapp.data.local.InvoiceWithTransactions
@@ -83,7 +85,7 @@ fun DashboardScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Fatura App",
+                        text = stringResource(R.string.app_name),
                         fontWeight = FontWeight.Bold,
                     )
                 },

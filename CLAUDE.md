@@ -1,8 +1,16 @@
-# Fatura App
+# Money Hole (repo/package: fatura-app / com.faturaapp)
 
 App pessoal Android (Kotlin/Jetpack Compose) pra analisar faturas de cartão de
 crédito em PDF (Nubank, Itaú, Mercado Pago). 100% on-device — sem backend, sem
 rede, sem servidor pra manter.
+
+**Nome exibido pro usuário é "Money Hole"** (rebrand em 2026-07-25,
+`@string/app_name`). Repo GitHub, `applicationId`/pacote Kotlin
+(`com.faturaapp`), classe `FaturaApp`/tema `Theme.FaturaApp` continuam com o
+nome antigo de propósito — são identificadores internos, e renomear o
+`applicationId` faria o Android tratar como um app novo (perderia os dados
+reais já instalados), sem ganho funcional nenhum. Só o que é visível ao
+usuário mudou.
 
 ## Princípios gerais
 
