@@ -161,22 +161,51 @@ Todo PR segue o mesmo padrão, sem pedir confirmação a cada passo
 1. `git checkout -b feature/nome-descritivo` (ou `fix/...`) a partir de
    `main` atualizado.
 2. Implementar, buildar (`./dev.sh build`), testar ao vivo no emulador.
-3. Rodar a suíte de testes automatizados (`./gradlew testDebugUnitTest
-   connectedDebugAndroidTest` — ver "Dev loop / testes") **antes de
-   commitar**. É o único momento em que os testes são obrigatórios; não
-   precisa ficar rodando a suíte inteira a cada mudança pequena durante o
-   desenvolvimento.
+3. Rodar a suíte de testes automatizados localmente (`./gradlew
+   testDebugUnitTest connectedDebugAndroidTest` — ver "Dev loop / testes")
+   **antes de commitar**, pra pegar quebra cedo. Não precisa ficar rodando
+   a suíte inteira a cada mudança pequena durante o desenvolvimento — só
+   nesse ponto, uma vez.
 4. `git add` arquivos específicos (nunca `-A` sem checar o `git status`
    antes), commit com mensagem explicando o *porquê*.
 5. `git push -u origin <branch>`.
-6. `gh pr create` com corpo descrevendo mudança + evidência de teste
-   (incluindo o resultado da suíte automatizada do passo 3).
-7. `gh pr merge --squash --delete-branch`.
-8. `git fetch origin --prune && git checkout main && git pull`.
-9. Rebuildar e copiar o APK atualizado pro Desktop quando o usuário pedir
-   (`cp android/app/build/outputs/apk/debug/app-debug.apk` pro
-   OneDrive/Desktop — a pasta Desktop real fica em `OneDrive/Desktop`,
-   não em `C:\Users\<user>\Desktop`).
+6. `gh pr create` com corpo descrevendo mudança + evidência de teste.
+7. **Esperar o CI do GitHub Actions terminar verde antes de mergear**
+   (`gh pr checks <número> --watch`) — é o gate real e obrigatório, não
+   só o passo 3 local. Ver "CI (GitHub Actions)" abaixo pro que ele roda
+   e a limitação atual de enforcement.
+8. `gh pr merge --squash --delete-branch`.
+9. `git fetch origin --prune && git checkout main && git pull`.
+10. Rebuildar e copiar o APK atualizado pro Desktop quando o usuário pedir
+    (`cp android/app/build/outputs/apk/debug/app-debug.apk` pro
+    OneDrive/Desktop — a pasta Desktop real fica em `OneDrive/Desktop`,
+    não em `C:\Users\<user>\Desktop`).
+
+## CI (GitHub Actions)
+
+`.github/workflows/ci.yml` roda em todo PR (e push em `main`), dois jobs
+independentes, ambos em `ubuntu-latest`:
+
+- **`unit-tests`**: `./gradlew testDebugUnitTest` (Categorizer,
+  SummaryAggregator) — sempre roda, sem dependência externa.
+- **`instrumented-tests`**: emulador Android via
+  `reactivecircus/android-emulator-runner` (API 30, com cache de
+  snapshot do AVD) rodando `./gradlew connectedDebugAndroidTest`,
+  **excluindo `InvoiceDispatcherTest`** via
+  `-Pandroid.testInstrumentationRunnerArguments.notClass=...` — esse
+  teste precisa dos PDFs reais de `src/androidTest/assets/`, que são
+  gitignored de propósito (dado pessoal, nunca commitados) e por isso
+  não existem no runner do CI. `RoomFoundationTest` e
+  `InvoiceRepositoryTest` não dependem deles e rodam normalmente.
+
+**Limitação atual de enforcement**: o repo é privado e branch protection
+com required status checks é feature paga do GitHub (Pro ou repo
+público) — `gh api repos/.../branches/main/protection` retorna 403 nesse
+plano. Ou seja, o CI roda e mostra o resultado no PR, mas o GitHub não
+bloqueia fisicamente o merge se estiver vermelho; o gate depende de
+checar o status antes de rodar `gh pr merge` (passo 7 acima). Se
+quiser o bloqueio de verdade, as opções são upgrade pra GitHub Pro ou
+tornar o repo público — decisão do usuário, não tomar sozinho.
 
 ## Dev loop / testes
 
@@ -207,7 +236,8 @@ Todo PR segue o mesmo padrão, sem pedir confirmação a cada passo
 - **PDFs de fatura reais nunca vão pro git** — `android/app/src/androidTest/assets/`
   está no `.gitignore` de propósito. Testados localmente, nunca commitados.
   Isso significa que `InvoiceDispatcherTest` só roda em quem já tem essas
-  cópias locais (não existe CI neste projeto) — os demais testes
+  cópias locais — no CI (ver seção abaixo) ele é explicitamente excluído.
+  Os demais testes
   instrumentados (Room, InvoiceRepository) não dependem delas e sempre
   rodam.
 - Pra inspecionar o banco Room ao vivo: puxar `.db`, `.db-wal` e `.db-shm`
