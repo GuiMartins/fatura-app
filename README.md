@@ -1,6 +1,6 @@
 # Casshole
 
-App Android pessoal (Kotlin + Jetpack Compose) pra analisar faturas de
+App Android (Kotlin + Jetpack Compose) pra analisar faturas de
 cartão de crédito em PDF — Nubank, Itaú e Mercado Pago. 100% on-device: sem
 backend próprio, sem servidor pra manter. A única exceção de rede é a busca
 automática de fatura por e-mail via IMAP, com a senha de app ficando só no
